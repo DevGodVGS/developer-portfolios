@@ -5,9 +5,18 @@ URL normalization rules (no modifications).
 This module is intended to be run as a module: python -m src.run_dup_report
 or via the top-level shim `run_dup_report.py`.
 """
+import os
 import re
 import sys
-from . import alphabetical
+
+try:
+    from . import alphabetical
+except Exception:
+    try:
+        from src import alphabetical
+    except Exception:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from src import alphabetical
 
 
 def main():
