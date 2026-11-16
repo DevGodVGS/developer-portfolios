@@ -4,101 +4,88 @@ Test the feed.json generation functionality
 """
 
 import json
-import sys
 import os
 import re
+import sys
+import unittest
 
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
-from alphabetical import extract_portfolio_data
-
-
-def test_extract_portfolio_data():
-    """Test portfolio data extraction from markdown lines"""
-    test_lines = [
-        "- [Alice Smith](https://alice.com) [Full Stack Developer]\n",
-        "- [Bob Jones](https://bob.dev)\n",
-        "- [Carol White](https://carol.io) [UI/UX Designer | Frontend Dev]\n",
-        "## Some Header\n",
-        "Not a portfolio line\n",
-        "- [Dave Brown](https://dave.com) []\n",  # Empty tagline
-    ]
-
-    portfolios = extract_portfolio_data(test_lines)
-
-    # Test count
-    assert len(portfolios) == 4, f"Expected 4 portfolios, got {len(portfolios)}"
-
-    # Test first entry with tagline
-    assert portfolios[0]['name'] == "Alice Smith"
-    assert portfolios[0]['url'] == "https://alice.com"
-    assert portfolios[0]['tagline'] == "Full Stack Developer"
-
-    # Test entry without tagline
-    assert portfolios[1]['name'] == "Bob Jones"
-    assert portfolios[1]['url'] == "https://bob.dev"
-    assert 'tagline' not in portfolios[1]
-
-    # Test entry with complex tagline
-    assert portfolios[2]['name'] == "Carol White"
-    assert portfolios[2]['tagline'] == "UI/UX Designer | Frontend Dev"
-
-    # Test entry with empty tagline (should not include tagline key)
-    assert portfolios[3]['name'] == "Dave Brown"
-    assert 'tagline' not in portfolios[3]
-
-    print("✓ All portfolio extraction tests passed!")
-    return True
+from src.alphabetical import extract_portfolio_data
 
 
-def test_feed_json_structure():
-    """Test that feed.json has valid structure"""
-    try:
-        with open('feed.json', 'r', encoding='utf-8') as f:
+class TestFeedJson(unittest.TestCase):
+    def test_extract_portfolio_data(self):
+        """Test portfolio data extraction from markdown lines"""
+        test_lines = [
+            "- [Alice Smith](https://alice.com) [Full Stack Developer]\n",
+            "- [Bob Jones](https://bob.dev)\n",
+            "- [Carol White](https://carol.io) [UI/UX Designer | Frontend Dev]\n",
+            "## Some Header\n",
+            "Not a portfolio line\n",
+            "- [Dave Brown](https://dave.com) []\n",  # Empty tagline
+        ]
+
+        portfolios = extract_portfolio_data(test_lines)
+
+        self.assertEqual(len(portfolios), 4)
+
+        # Test first entry with tagline
+        self.assertEqual(portfolios[0]['name'], "Alice Smith")
+        self.assertEqual(portfolios[0]['url'], "https://alice.com")
+        self.assertEqual(portfolios[0]['tagline'], "Full Stack Developer")
+
+        # Test entry without tagline
+        self.assertEqual(portfolios[1]['name'], "Bob Jones")
+        self.assertEqual(portfolios[1]['url'], "https://bob.dev")
+        self.assertNotIn('tagline', portfolios[1])
+
+        # Test entry with complex tagline
+        self.assertEqual(portfolios[2]['name'], "Carol White")
+        self.assertEqual(portfolios[2]['tagline'], "UI/UX Designer | Frontend Dev")
+
+        # Test entry with empty tagline (should not include tagline key)
+        self.assertEqual(portfolios[3]['name'], "Dave Brown")
+        self.assertNotIn('tagline', portfolios[3])
+
+    def test_feed_json_structure(self):
+        """Test that feed.json has valid structure"""
+        feed_path = os.path.join(REPO_ROOT, 'feed.json')
+        self.assertTrue(os.path.exists(feed_path), f"feed.json not found at {feed_path}")
+
+        with open(feed_path, 'r', encoding='utf-8') as f:
             portfolios = json.load(f)
 
-        # Check it's a list
-        assert isinstance(portfolios, list), "feed.json should contain a list"
+        self.assertIsInstance(portfolios, list)
+        self.assertGreater(len(portfolios), 0)
 
-        # Check we have entries
-        assert len(portfolios) > 0, "feed.json should not be empty"
-
-        # Check each entry has required fields
         for i, portfolio in enumerate(portfolios):
-            assert 'name' in portfolio, f"Entry {i} missing 'name' field"
-            assert 'url' in portfolio, f"Entry {i} missing 'url' field"
-            assert isinstance(portfolio['name'], str), f"Entry {i} name should be string"
-            assert isinstance(portfolio['url'], str), f"Entry {i} url should be string"
+            self.assertIn('name', portfolio, f"Entry {i} missing 'name' field")
+            self.assertIn('url', portfolio, f"Entry {i} missing 'url' field")
+            self.assertIsInstance(portfolio['name'], str, f"Entry {i} name should be string")
+            self.assertIsInstance(portfolio['url'], str, f"Entry {i} url should be string")
 
-            # If tagline exists, it should be a string
             if 'tagline' in portfolio:
-                assert isinstance(portfolio['tagline'], str), f"Entry {i} tagline should be string"
+                self.assertIsInstance(portfolio['tagline'], str, f"Entry {i} tagline should be string")
 
-        print(f"✓ feed.json structure is valid ({len(portfolios)} entries)")
-        return True
-    except FileNotFoundError:
-        print("✗ feed.json not found - run the script first")
-        return False
-    except json.JSONDecodeError as e:
-        print(f"✗ feed.json is not valid JSON: {e}")
-        return False
+    def test_feed_in_sync_with_readme(self):
+        """Test that feed.json is strictly in sync with README.md entries and header count"""
+        readme_path = os.path.join(REPO_ROOT, 'README.md')
+        feed_path = os.path.join(REPO_ROOT, 'feed.json')
 
-
-def test_feed_in_sync_with_readme():
-    """Test that feed.json is strictly in sync with README.md entries and header count"""
-    try:
-        with open('README.md', 'r', encoding='utf-8') as f:
+        with open(readme_path, 'r', encoding='utf-8') as f:
             readme_lines = f.readlines()
         extracted = extract_portfolio_data(readme_lines)
 
-        with open('feed.json', 'r', encoding='utf-8') as f:
+        with open(feed_path, 'r', encoding='utf-8') as f:
             feed = json.load(f)
 
-        assert len(extracted) == len(feed), f"Count mismatch: README has {len(extracted)} entries, feed.json has {len(feed)}"
+        self.assertEqual(len(extracted), len(feed), f"Count mismatch: README has {len(extracted)} entries, feed.json has {len(feed)}")
 
         for i, (r_entry, f_entry) in enumerate(zip(extracted, feed)):
-            assert r_entry == f_entry, f"Entry {i} mismatch: {r_entry} vs {f_entry}"
+            self.assertEqual(r_entry, f_entry, f"Entry {i} mismatch")
 
         header_pattern = re.compile(r"^##\s+Current\s+Portfolio\s+Count:\s+(\d+)")
         header_count = None
@@ -108,59 +95,8 @@ def test_feed_in_sync_with_readme():
                 header_count = int(m.group(1))
                 break
 
-        assert header_count == len(extracted), f"Header count {header_count} does not match actual count {len(extracted)}"
-        print(f"✓ feed.json is strictly in sync with README.md ({len(feed)} entries)")
-        return True
-    except Exception as e:
-        print(f"✗ Sync test failed: {e}")
-        return False
-
-
-def main():
-    """Run all tests"""
-    print("Running feed.json tests...\n")
-
-    results = []
-
-    # Test extraction logic
-    try:
-        results.append(test_extract_portfolio_data())
-    except AssertionError as e:
-        print(f"✗ Portfolio extraction test failed: {e}")
-        results.append(False)
-    except Exception as e:
-        print(f"✗ Unexpected error in extraction test: {e}")
-        results.append(False)
-
-    # Test feed.json structure
-    try:
-        results.append(test_feed_json_structure())
-    except AssertionError as e:
-        print(f"✗ Feed structure test failed: {e}")
-        results.append(False)
-    except Exception as e:
-        print(f"✗ Unexpected error in structure test: {e}")
-        results.append(False)
-
-    # Test feed.json sync with README
-    try:
-        results.append(test_feed_in_sync_with_readme())
-    except AssertionError as e:
-        print(f"✗ Feed sync test failed: {e}")
-        results.append(False)
-    except Exception as e:
-        print(f"✗ Unexpected error in sync test: {e}")
-        results.append(False)
-
-    # Summary
-    print(f"\n{'='*50}")
-    if all(results):
-        print("✓ All tests passed!")
-        return 0
-    else:
-        print(f"✗ {len([r for r in results if not r])} test(s) failed")
-        return 1
+        self.assertEqual(header_count, len(extracted), f"Header count {header_count} does not match actual count {len(extracted)}")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    unittest.main()
