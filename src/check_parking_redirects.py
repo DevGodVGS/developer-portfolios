@@ -17,6 +17,7 @@ Usage:
   python src/check_parking_redirects.py --timeout 10      # per-request timeout (default: 10)
 """
 import argparse
+import os
 import re
 import ssl
 import sys
@@ -336,6 +337,11 @@ def main(argv=None):
     print()
     if not flagged:
         print("No ad/parking redirects detected.")
+        if args.output and args.output != args.lychee_out and os.path.exists(args.output):
+            try:
+                os.remove(args.output)
+            except OSError:
+                pass
         return 0
 
     report = build_markdown(flagged)
