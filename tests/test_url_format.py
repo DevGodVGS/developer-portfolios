@@ -1,5 +1,11 @@
 import os
+import sys
 import unittest
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
 from src import alphabetical
 
 
@@ -69,9 +75,6 @@ class TestFindMalformedUrls(unittest.TestCase):
         self.assertEqual(issues, [], f"Malformed URLs found (line, name, url): {issues}")
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 class TestFixEscapedUrlScheme(unittest.TestCase):
     def test_removes_backslash(self):
         lines = ["- [A](https\\://a.com) [Dev]\n", "- [B](http\\://b.com)\n"]
@@ -83,3 +86,7 @@ class TestFixEscapedUrlScheme(unittest.TestCase):
     def test_leaves_good_lines(self):
         lines = ["- [A](https://a.com)\n"]
         self.assertEqual(alphabetical.fix_escaped_url_scheme(lines), (lines, 0))
+
+
+if __name__ == "__main__":
+    unittest.main()
