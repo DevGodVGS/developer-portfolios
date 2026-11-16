@@ -14,7 +14,7 @@ This repo can serve as inspiration for your portfolio!
 
 [Developer Portfolios Website](https://6e87v.hatchboxapp.com)
 
-## Current Portfolio Count: 2107
+## Current Portfolio Count: 2110
 
 **Jump to:** [A](#a) | [B](#b) | [C](#c) | [D](#d) | [E](#e) | [F](#f) | [G](#g) | [H](#h) | [I](#i)
 | [J](#j) | [K](#k) | [L](#l) | [M](#m) | [N](#n) | [O](#o) | [P](#p) | [Q](#q) | [R](#r) | [S](#s)
@@ -853,7 +853,7 @@ This repo can serve as inspiration for your portfolio!
 - [Harsh Doshi](https://iamharshdoshi.com) [Cloud Architect | Software Engineer | Agile Certified | Photographer | Entrepreneur]
 - [Harsh Prajapati](https://harsh-prajapati54-github-io.vercel.app) [AI|ML Engineer]
 - [Harsh Singhvi](https://harshsinghvi.com)
-- [Harsh Tiwari](https://portfolio-geld-zuersts-projects.vercel.app/) [Full Stack Developer | AI Enthusiast]
+- [Harsh Tiwari](https://portfolio-geld-zuersts-projects.vercel.app) [Full Stack Developer | AI Enthusiast]
 - [Harsh Vardhan Singh](https://hvsingh.vercel.app) [Full Stack Developer]
 - [Harshendra Prajapati](https://harshendra.web.app) [Creative Developer | MERN Stack & React Native]
 - [Harshith Raj](https://harshithrajbangera.github.io/Portfolio/) [Full Stack Developer]
@@ -1445,7 +1445,7 @@ This repo can serve as inspiration for your portfolio!
 
 - [Ohk Soe Htet](https://www.ohksoehtet.dev) [Software Engineer | Full Stack Developer]
 - [Oktay Shakirov](https://oktayshakirov.com)
-- [Oleg Vishnevsky](https://lovelyfriendly.com/) [Design Director | Design Engineer]
+- [Oleg Vishnevsky](https://lovelyfriendly.com) [Design Director | Design Engineer]
 - [Oliver Granlund](https://olli.works)
 - [Oliver Newth](https://n3wth.com) [AI Product Leader | Google Trust & Safety]
 - [Olle Andreasson](https://oted.online) [Staff Engineer]
