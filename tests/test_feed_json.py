@@ -6,6 +6,7 @@ Test the feed.json generation functionality
 import json
 import sys
 import os
+import re
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -84,6 +85,37 @@ def test_feed_json_structure():
         return False
 
 
+def test_feed_in_sync_with_readme():
+    """Test that feed.json is strictly in sync with README.md entries and header count"""
+    try:
+        with open('README.md', 'r', encoding='utf-8') as f:
+            readme_lines = f.readlines()
+        extracted = extract_portfolio_data(readme_lines)
+
+        with open('feed.json', 'r', encoding='utf-8') as f:
+            feed = json.load(f)
+
+        assert len(extracted) == len(feed), f"Count mismatch: README has {len(extracted)} entries, feed.json has {len(feed)}"
+
+        for i, (r_entry, f_entry) in enumerate(zip(extracted, feed)):
+            assert r_entry == f_entry, f"Entry {i} mismatch: {r_entry} vs {f_entry}"
+
+        header_pattern = re.compile(r"^##\s+Current\s+Portfolio\s+Count:\s+(\d+)")
+        header_count = None
+        for line in readme_lines:
+            m = header_pattern.match(line.strip())
+            if m:
+                header_count = int(m.group(1))
+                break
+
+        assert header_count == len(extracted), f"Header count {header_count} does not match actual count {len(extracted)}"
+        print(f"✓ feed.json is strictly in sync with README.md ({len(feed)} entries)")
+        return True
+    except Exception as e:
+        print(f"✗ Sync test failed: {e}")
+        return False
+
+
 def main():
     """Run all tests"""
     print("Running feed.json tests...\n")
@@ -108,6 +140,16 @@ def main():
         results.append(False)
     except Exception as e:
         print(f"✗ Unexpected error in structure test: {e}")
+        results.append(False)
+
+    # Test feed.json sync with README
+    try:
+        results.append(test_feed_in_sync_with_readme())
+    except AssertionError as e:
+        print(f"✗ Feed sync test failed: {e}")
+        results.append(False)
+    except Exception as e:
+        print(f"✗ Unexpected error in sync test: {e}")
         results.append(False)
 
     # Summary
