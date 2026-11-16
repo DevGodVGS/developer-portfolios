@@ -72,6 +72,18 @@ class TestCheckParkingRedirects(unittest.TestCase):
                 # Output file should be removed when there are no flagged items
                 self.assertFalse(os.path.exists(output_path))
 
+    def test_ssl_ctx_secure_by_default(self):
+        import ssl
+        ctx = check_parking_redirects._ssl_ctx(insecure=False)
+        self.assertTrue(ctx.check_hostname)
+        self.assertEqual(ctx.verify_mode, ssl.CERT_REQUIRED)
+
+    def test_ssl_ctx_insecure_mode(self):
+        import ssl
+        ctx = check_parking_redirects._ssl_ctx(insecure=True)
+        self.assertFalse(ctx.check_hostname)
+        self.assertEqual(ctx.verify_mode, ssl.CERT_NONE)
+
 
 if __name__ == "__main__":
     unittest.main()

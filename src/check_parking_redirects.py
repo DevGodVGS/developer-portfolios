@@ -81,10 +81,11 @@ _LINK_RE = re.compile(r"^-\s+\[([^\]]+)\]\(([^)]+)\)")
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _ssl_ctx():
+def _ssl_ctx(insecure: bool = False):
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    if insecure:
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
     return ctx
 
 
@@ -129,10 +130,10 @@ def _make_request(url: str, method: str, timeout: int) -> urllib.request.Request
     return req
 
 
-def _follow(url: str, method: str, timeout: int):
+def _follow(url: str, method: str, timeout: int, insecure: bool = False):
     """Open url, return (response, final_url). Raises on error."""
     req = _make_request(url, method, timeout)
-    resp = urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx())
+    resp = urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx(insecure=insecure))
     return resp, resp.url
 
 
@@ -140,12 +141,12 @@ def _follow(url: str, method: str, timeout: int):
 # Per-URL check
 # ---------------------------------------------------------------------------
 
-def check_url(url: str, timeout: int) -> dict:
+def check_url(url: str, timeout: int, insecure: bool = False) -> dict:
     result = {"url": url, "final_url": url, "status": "ok", "reason": ""}
 
     # --- Phase 1: HEAD (fast, no body) ---
     try:
-        resp, final_url = _follow(url, "HEAD", timeout)
+        resp, final_url = _follow(url, "HEAD", timeout, insecure=insecure)
         result["final_url"] = final_url
 
         if _is_parking_domain(final_url):
@@ -182,7 +183,7 @@ def check_url(url: str, timeout: int) -> dict:
 
     # --- Phase 2: GET + content check ---
     try:
-        resp, final_url = _follow(url, "GET", timeout)
+        resp, final_url = _follow(url, "GET", timeout, insecure=insecure)
         result["final_url"] = final_url
 
         if _is_parking_domain(final_url):
@@ -245,7 +246,7 @@ def parse_lychee_flagged_urls(lychee_path: str) -> set:
 # Main scan
 # ---------------------------------------------------------------------------
 
-def scan(lines, concurrency: int, timeout: int, skip_urls: set, verbose: bool):
+def scan(lines, concurrency: int, timeout: int, skip_urls: set, verbose: bool, insecure: bool = False):
     entries = extract_links(lines)
     checkable = [(i, n, u) for i, n, u in entries if u not in skip_urls]
     skipped = len(entries) - len(checkable)
@@ -257,7 +258,7 @@ def scan(lines, concurrency: int, timeout: int, skip_urls: set, verbose: bool):
 
     flagged = []
     with ThreadPoolExecutor(max_workers=concurrency) as pool:
-        futures = {pool.submit(check_url, url, timeout): (idx, name, url)
+        futures = {pool.submit(check_url, url, timeout, insecure): (idx, name, url)
                    for idx, name, url in checkable}
         done = 0
         total = len(futures)
@@ -321,6 +322,8 @@ def main(argv=None):
                    help="Write markdown report to this file (appends if lychee-out is the same path)")
     p.add_argument("--concurrency", type=int, default=20)
     p.add_argument("--timeout", type=int, default=10)
+    p.add_argument("--insecure", action="store_true",
+                   help="Allow unverified SSL certificates (disabled by default)")
     p.add_argument("--verbose", action="store_true")
     args = p.parse_args(argv)
 
@@ -332,7 +335,7 @@ def main(argv=None):
         return 2
 
     skip_urls = parse_lychee_flagged_urls(args.lychee_out) if args.lychee_out else set()
-    flagged = scan(lines, args.concurrency, args.timeout, skip_urls, args.verbose)
+    flagged = scan(lines, args.concurrency, args.timeout, skip_urls, args.verbose, insecure=args.insecure)
 
     print()
     if not flagged:
