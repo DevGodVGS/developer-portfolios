@@ -26,11 +26,13 @@ class TestFeedJson(unittest.TestCase):
             "## Some Header\n",
             "Not a portfolio line\n",
             "- [Dave Brown](https://dave.com) []\n",  # Empty tagline
+            "- [Eve Adams](https://eve.com)\n",
+            "  [Security Engineer]\n",  # Indented multiline tagline
         ]
 
         portfolios = extract_portfolio_data(test_lines)
 
-        self.assertEqual(len(portfolios), 4)
+        self.assertEqual(len(portfolios), 5)
 
         # Test first entry with tagline
         self.assertEqual(portfolios[0]['name'], "Alice Smith")
@@ -49,6 +51,10 @@ class TestFeedJson(unittest.TestCase):
         # Test entry with empty tagline (should not include tagline key)
         self.assertEqual(portfolios[3]['name'], "Dave Brown")
         self.assertNotIn('tagline', portfolios[3])
+
+        # Test multiline tagline continuation
+        self.assertEqual(portfolios[4]['name'], "Eve Adams")
+        self.assertEqual(portfolios[4]['tagline'], "Security Engineer")
 
     def test_feed_json_structure(self):
         """Test that feed.json has valid structure"""

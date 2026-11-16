@@ -28,7 +28,14 @@ def extract_portfolio_data(lines):
     # Pattern: - [name](url) optional[tagline]
     pattern = re.compile(r'^-\s+\[([^\]]+)\]\(([^)]+)\)(?:\s+\[([^\]]*)\])?')
 
+    merged_lines = []
     for line in lines:
+        if line.startswith("  ") and merged_lines and merged_lines[-1].startswith("- "):
+            merged_lines[-1] = merged_lines[-1].rstrip() + " " + line.strip() + "\n"
+        else:
+            merged_lines.append(line)
+
+    for line in merged_lines:
         match = pattern.match(line.strip())
         if match:
             name = match.group(1).strip()
